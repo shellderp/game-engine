@@ -3,11 +3,13 @@ package shellderp.game.network;
 import java.nio.ByteBuffer;
 
 /**
- * Immutable class representing a packet sent
+ * Immutable class representing a packet sent on the network. Provides toBuffer and fromBuffer methods to
+ * send and receive on the network. This is transparent to a user of this library, since they just send and
+ * receive payload ByteBuffers. Packets must be created using the Builder subclass.
  * <p>
  * Created by: Mike
  */
-public class Packet {
+class Packet {
 
     private static final int BITFLAG_RELIABLE = 1 << 0;
     private static final int BITFLAG_ACK = 1 << 1;
@@ -83,10 +85,10 @@ public class Packet {
         private boolean sequenceSet = false;
 
         /**
-         * Sets the payload of the packet.
+         * Sets the payload of the packet. A sequence must also be set.
          *
          * @param payload The buffer to include as the payload. This is what the receiving stream will see.
-         *                Once passed in, this buffer is owned by the Packet.
+         *                Once passed in, this buffer is owned by the Packet and should not be modified.
          * @return This builder.
          */
         public Builder payload(ByteBuffer payload) {
@@ -149,7 +151,7 @@ public class Packet {
                 throw new IllegalArgumentException("packet cannot be CLOSE and CONNECT REQUEST");
             }
             if (payload != null && !sequenceSet) {
-                throw  new IllegalArgumentException("packet with a payload must have sequence set");
+                throw new IllegalArgumentException("packet with a payload must have sequence set");
             }
             return new Packet(payload, sequence, reliable, connectRequest, hasAck, ackSequence, close);
         }

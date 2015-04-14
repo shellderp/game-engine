@@ -235,7 +235,7 @@ public class Connection implements Receiver, GameStep {
 
         // Track when we started, so we can obey the timeout.
         final long startMs = System.currentTimeMillis();
-        // Track when we sent the last request, so we can retry after timeout, separate from the total
+        // Track when we sent the last request, so we can retry after timeout, separate from the overall
         // timeout.
         long lastRequestMs = startMs;
 
@@ -255,14 +255,15 @@ public class Connection implements Receiver, GameStep {
 
         // Wait for reply, or timeout.
         while (true) {
-            // If we get a message from a different address than endpoint, ignore it.
             ByteBuffer buffer = ByteBuffer.allocate(Packet.MAX_PACKET_SIZE);
             socketAddress = socket.tryReceive(buffer);
             buffer.flip();
 
+            // If we get a message from a different address than endpoint, ignore it.
             if (socketAddress != null && socketAddress.equals(target)) {
                 Packet packet = Packet.fromBuffer(buffer);
-                // We expect a packet that is a connect request and acknowledges our request.
+                // We expect a packet that is a connect request and acknowledges our request. In any other
+                // case we just keep trying.
                 if (packet.isConnectRequest() && packet.hasAck() && packet.getAckSequence() == sequenceOut) {
                     sequenceIn = Packet.nextSequence(packet.getSequence());
                     break;
