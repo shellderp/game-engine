@@ -50,6 +50,7 @@ public class Connection implements Receiver, GameStep {
         CLOSED, // Closed and callback was dispatched to handler.
     }
 
+    // Can rely on this never changing once it is CLOSED, but must consider concurrency otherwise.
     private final AtomicReference<State> state = new AtomicReference<>(State.OPEN);
 
     /**
@@ -166,6 +167,8 @@ public class Connection implements Receiver, GameStep {
         if (state.get() != State.OPEN) {
             return;
         }
+        // Technically at any point after this, the state could become closed, but there's no harm in
+        // processing one extra packet.
 
         if (!from.equals(getEndPoint())) {
             return; // Ignore packets from other sources, since anyone can send to our socket.
