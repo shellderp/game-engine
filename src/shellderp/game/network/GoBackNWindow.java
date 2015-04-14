@@ -1,5 +1,7 @@
 package shellderp.game.network;
 
+import shellderp.game.Timer;
+
 import java.net.ProtocolException;
 import java.util.ArrayList;
 import java.util.LinkedList;

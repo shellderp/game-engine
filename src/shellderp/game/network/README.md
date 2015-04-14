@@ -13,7 +13,7 @@ The requirements are based on the needs for certain games and are as follows:
 
 Implementation:
 - Guaranteed packets use the Go-Back-N protocol for reliability
-- Receiver sends ACK for each reliable packet received. ACKs are cumulative. To avoid sending ack packets with no payload, acks can be piggybacked on both reliable and unreliable packets. PiggybackAck achieves this with a timer. 
+- Receiver sends cumulative ACKs when reliable packets are received. To avoid sending ack packets with no payload, acks can be piggybacked on both reliable and unreliable packets. PiggybackAck achieves this with a timer. This is particularly useful since we are sending frequent location updates anyway.
 - No ACK for non-guaranteed packets
 - Non-guaranteed packets have a separately growing sequence number, so that if we receive an old packet it can be dropped.
 - Separate thread runs to constantly receive messages on the socket. Once messages are read, they are added to the inQueue on the correct stream

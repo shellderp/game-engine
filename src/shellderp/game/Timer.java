@@ -1,4 +1,4 @@
-package shellderp.game.network;
+package shellderp.game;
 
 /**
  * Simpler timer. Starts inactive.
