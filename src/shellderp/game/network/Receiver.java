@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.net.SocketAddress;
 
 /**
- * Simple interface to provide a packet-received handler when Socket
- * has read a message packet. Implemented by Connection and Server.
+ * Simple interface to provide a packet-received handler when ReceiveThread has read a message packet.
+ * Implemented by Connection and Server.
  * <p>
  * Server receives a packet from Socket and dispatches it to Connection.
  * If using a Connection without a Server, Socket dispatches to Connection.
