@@ -92,6 +92,9 @@ class Packet {
          * @return This builder.
          */
         public Builder payload(ByteBuffer payload) {
+            if (payload == null || payload.limit() == 0) {
+                throw new IllegalArgumentException("payload cannot be null or empty");
+            }
             this.payload = payload;
             return this;
         }
@@ -202,7 +205,7 @@ class Packet {
         final int size = ((payload == null) ? 0 : payload.limit())
                          + 1 /* 1 byte flags */
                          + 2 /* 2 byte sequence */
-                         + (ack ? 2 : 0); /* 2 optional byte ack sequence */
+                         + (ack ? 2 : 0); /* optional 2 byte ack sequence */
 
         if (size > MAX_PACKET_SIZE) {
             throw new IllegalArgumentException(
@@ -216,12 +219,16 @@ class Packet {
                           | (ack ? BITFLAG_ACK : 0)
                           | (close ? BITFLAG_CLOSE : 0);
         buffer.put((byte) flags);
+
         buffer.putShort((short) sequence);
+
         if (ack) {
             buffer.putShort((short) ackSequence);
         }
+
         if (payload != null) {
             buffer.put(payload);
+
             // Rewind the payload, in case we wish to call toBuffer again.
             payload.rewind();
         }

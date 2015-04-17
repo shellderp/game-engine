@@ -3,7 +3,6 @@ package shellderp.game.network;
 import shellderp.game.GameStep;
 
 import java.io.IOException;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Logger;
@@ -15,7 +14,7 @@ import java.util.logging.Logger;
  * <p>
  * Created by: Mike
  */
-public class UnreliableStream implements GameStep, Receiver {
+public class UnreliableStream implements GameStep {
 
     private final Connection connection;
     private final ConnectionHandler handler;
@@ -26,6 +25,7 @@ public class UnreliableStream implements GameStep, Receiver {
     private int sequenceIn;
     private int sequenceOut;
 
+    // TODO: think about adding an inQueue size limit so rogue clients can't result in out-of-memory crashes
     final ConcurrentLinkedQueue<Packet> inQueue = new ConcurrentLinkedQueue<>();
 
     /**
@@ -73,11 +73,9 @@ public class UnreliableStream implements GameStep, Receiver {
      * An unreliable packet is valid unless the sequence is out of order,
      * i.e. we have already seen a newer packet.
      *
-     * @param from   Ignored, we expect our Connection to have checked that this is our endpoint.
      * @param packet The packet received on the stream, must not be marked reliable.
      */
-    @Override
-    public void packetReceived(SocketAddress from, Packet packet) {
+    void packetReceived(Packet packet) {
         if (packet.isReliable()) {
             throw new IllegalArgumentException("unreliable stream got reliable packet");
         }

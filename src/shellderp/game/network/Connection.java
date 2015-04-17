@@ -17,8 +17,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * A connection can be created by opening it to a specified endpoint on the clientside ({@link #open})
  * or by a Server when a client connects.
  * <p>
- * No thread safety is guaranteed. step() needs to be called regularly (at least a few times per second) for
- * the connection state to be maintained. Not calling this often enough will result in poorer latency.
+ * It is safe to call send on the streams concurrently with a call to step().
+ * step() needs to be called regularly (at least a few times per second) for the connection state to be
+ * maintained. Not calling this often enough will result in poorer latency.
  * <p>
  * Timeout: a connection does not attempt to keep-alive internally. The only timeout scenario is if a reliable
  * packet is sent but not acked within the send timeout {@link ReliableStream#setSendTimeout(long)}. Thus a
@@ -26,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>
  * Created by: Mike
  */
-public class Connection implements Receiver, GameStep {
+public class Connection implements GameStep {
 
     /**
      * The socket underlying this connection. In Connection we only use the send
@@ -155,15 +156,14 @@ public class Connection implements Receiver, GameStep {
     }
 
     /**
-     * Called from Socket when a packet is received.
+     * Called by ReceiveThread when a packet is received.
      * We dispatch it to be handled by the correct stream.
      *
      * @param from   The address from which we received the packet. If this is not the address we are
      *               connected to, the packet will be ignored.
      * @param packet The packet received from our Socket.
      */
-    @Override
-    public void packetReceived(SocketAddress from, Packet packet) throws IOException {
+    void packetReceived(SocketAddress from, Packet packet) throws IOException {
         if (state.get() != State.OPEN) {
             return;
         }
@@ -184,10 +184,10 @@ public class Connection implements Receiver, GameStep {
         }
 
         if (packet.isReliable() || packet.hasAck()) {
-            getReliableStream().packetReceived(from, packet);
+            getReliableStream().packetReceived(packet);
         }
         if (!packet.isReliable() && packet.hasPayload()) {
-            getUnreliableStream().packetReceived(from, packet);
+            getUnreliableStream().packetReceived(packet);
         }
     }
 
@@ -274,7 +274,7 @@ public class Connection implements Receiver, GameStep {
 
             long nowMs = System.currentTimeMillis();
             if (nowMs - startMs > timeoutMs) {
-                throw new TimeoutException();
+                throw new TimeoutException("connect timed out");
             }
 
             if (nowMs - lastRequestMs > ReliableStream.DEFAULT_PACKET_LOST_TIMEOUT_MS) {
@@ -302,7 +302,7 @@ public class Connection implements Receiver, GameStep {
         socket.sendDirect(new Packet.Builder().ack(sequenceIn).build(), target);
 
         Connection connection = new Connection(socket, target, sequenceIn, sequenceOut, handler);
-        ReceiveThread receiveThread = new ReceiveThread(socket, connection);
+        ReceiveThread receiveThread = new ReceiveThread(socket, connection::packetReceived);
         connection.setReceiveThread(receiveThread);
 
         // Kick off a thread to receive on this socket until it is closed.

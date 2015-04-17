@@ -12,10 +12,10 @@ import java.util.logging.Logger;
 
 /**
  * Manages connections from multiple clients and implements connection establishment protocol.
- *
+ * <p>
  * Created by: Mike
  */
-public class Server implements Receiver {
+public class Server {
 
     private final Socket socket;
 
@@ -54,7 +54,7 @@ public class Server implements Receiver {
 
         socket = SocketProvider.getDefault().createSocket(bindAddress);
 
-        receiveThread = new ReceiveThread(socket, this);
+        receiveThread = new ReceiveThread(socket, this::packetReceived);
         new Thread(receiveThread).start();
     }
 
@@ -62,7 +62,7 @@ public class Server implements Receiver {
         this.timeToKeepPendingConnsMs = timeToKeepPendingConnsMs;
     }
 
-    public void stop() throws IOException {
+    public synchronized void stop() throws IOException {
         receiveThread.stop();
 
         for (Iterator<Connection> iterator = clients.values().iterator(); iterator.hasNext(); ) {
@@ -72,7 +72,7 @@ public class Server implements Receiver {
         }
     }
 
-    public void step(long timeDeltaMs) {
+    public synchronized void step(long timeDeltaMs) {
         removeExpiredPendingConnections();
 
         for (Iterator<Connection> iterator = clients.values().iterator(); iterator.hasNext(); ) {
@@ -99,35 +99,44 @@ public class Server implements Receiver {
         }
     }
 
-    @Override
-    public void packetReceived(SocketAddress socketAddress, Packet packet) {
+    /**
+     * Called by ReceiveThread when a packet is received.
+     * If there is a connection associated with this fromAddress, we pass it to the Connection, otherwise
+     * we handle any potential connection request.
+     * <p>
+     * This needs to be synchronized with respect to step() since we access clients and pendingConnections.
+     *
+     * @param fromAddress The address from which we received the packet.
+     * @param packet      The packet received from our Socket.
+     */
+    synchronized void packetReceived(SocketAddress fromAddress, Packet packet) {
         // If this address is already connected, we dispatch to the connection instance.
-        if (clients.containsKey(socketAddress)) {
-            Connection connection = clients.get(socketAddress);
+        if (clients.containsKey(fromAddress)) {
+            Connection connection = clients.get(fromAddress);
             try {
-                connection.packetReceived(socketAddress, packet);
+                connection.packetReceived(fromAddress, packet);
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "IOException in processing client", e);
             }
             return;
         }
 
-        // Not connected and an ACK? This is likely a pending connection, unless either
-        // this is a rogue client or the pending connection has expired.
+        // Not connected and an ACK? This is likely a pending connection, unless this is a rogue client or
+        // the pending connection has expired.
         if (packet.hasAck()) {
             // Create a dummy to probe the set of pending connections.
-            PendingConnection probe = new PendingConnection(socketAddress,
+            PendingConnection probe = new PendingConnection(fromAddress,
                                                             packet.getAckSequence());
             if (pendingConnections.containsKey(probe)) {
                 int clientSequence = pendingConnections.remove(probe);
-                Connection client = new Connection(socket, socketAddress, clientSequence,
+                Connection client = new Connection(socket, fromAddress, clientSequence,
                                                    packet.getAckSequence(), connectionHandlerProvider.get());
-                clients.put(socketAddress, client);
+                clients.put(fromAddress, client);
             } else {
                 logger.info("got ACK with no corresponding pending connection " + probe);
             }
         } else if (packet.isConnectRequest()) {
-            if (allowConnection.test(socketAddress)) {
+            if (allowConnection.test(fromAddress)) {
                 Packet reply = new Packet.Builder().randomSequence()
                                                    .connectRequest()
                                                    .ack(Packet.nextSequence(packet.getSequence()))
@@ -135,22 +144,20 @@ public class Server implements Receiver {
                 // Track that we received a connect request from this address,
                 // so we know that on a follow up ACK the connection is established.
                 // We track it with our outgoing sequence since that is the ACK we expect back.
-                pendingConnections.put(new PendingConnection(socketAddress,
+                pendingConnections.put(new PendingConnection(fromAddress,
                                                              Packet.nextSequence(reply.getSequence())),
                                        Packet.nextSequence(packet.getSequence()));
                 // Then reply with a connect request + ACK
                 try {
-                    socket.sendDirect(reply, socketAddress);
+                    socket.sendDirect(reply, fromAddress);
                 } catch (IOException e) {
                     logger.log(Level.SEVERE, "IOException in sending connection handshake reply", e);
                 }
             } else {
-                logger.info("rejected connect request from " + socketAddress);
+                logger.info("rejected connect request from " + fromAddress);
                 // Ignore the connect request since we decided to reject it.
-                // It may be better to reply with a reject packet, but that may
-                // increase the damage of a DDOS.
-                // If we want to reply with a reason for rejection, this should be done
-                // at the layer above this one.
+                // It may be better to reply with a reject packet, but that may increase the damage of a DDOS.
+                // If we want to reply with a reason for rejection, this should be done at the layer above.
             }
         } else {
             // We must be receiving data from this address, but we have no connection.

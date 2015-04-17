@@ -4,7 +4,6 @@ import shellderp.game.GameStep;
 
 import java.io.IOException;
 import java.net.ProtocolException;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -16,7 +15,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * <p>
  * Created by: Mike
  */
-public class ReliableStream implements GameStep, Receiver {
+public class ReliableStream implements GameStep {
 
     /**
      * We need a default value for how long to wait before we assume a packet is lost and needs to be resent.
@@ -38,6 +37,7 @@ public class ReliableStream implements GameStep, Receiver {
 
     private final GoBackNWindow window;
 
+    // TODO: think about adding an inQueue size limit so rogue clients can't result in out-of-memory crashes
     private final ConcurrentLinkedQueue<Packet> inQueue = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<Packet> outQueue = new ConcurrentLinkedQueue<>();
 
@@ -122,8 +122,7 @@ public class ReliableStream implements GameStep, Receiver {
         // TODO: have a log warning when send queue is large, however ConcurrentLinkedQueue.size() is O(n)
     }
 
-    @Override
-    public void packetReceived(SocketAddress from, Packet packet) throws IOException {
+    void packetReceived(Packet packet) throws IOException {
         if (packet.hasAck()) {
             synchronized (window) {
                 try {

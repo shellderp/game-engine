@@ -122,8 +122,8 @@ public class UnreliableStreamTest {
         seq = Packet.nextSequence(seq);
         Packet p2 = new Packet.Builder().sequence(seq).build();
 
-        unreliableStream.packetReceived(serverAddress, p1);
-        unreliableStream.packetReceived(serverAddress, p2);
+        unreliableStream.packetReceived(p1);
+        unreliableStream.packetReceived(p2);
 
         assertEquals(2, unreliableStream.inQueue.size());
     }
@@ -139,8 +139,8 @@ public class UnreliableStreamTest {
         seq = Packet.nextSequence(seq + 100);
         Packet p2 = new Packet.Builder().sequence(seq).build();
 
-        unreliableStream.packetReceived(serverAddress, p1);
-        unreliableStream.packetReceived(serverAddress, p2);
+        unreliableStream.packetReceived(p1);
+        unreliableStream.packetReceived(p2);
 
         assertEquals(2, unreliableStream.inQueue.size());
     }
@@ -157,8 +157,8 @@ public class UnreliableStreamTest {
         seq = seq - 100;
         Packet p2 = new Packet.Builder().sequence(seq).build();
 
-        unreliableStream.packetReceived(serverAddress, p1);
-        unreliableStream.packetReceived(serverAddress, p2);
+        unreliableStream.packetReceived(p1);
+        unreliableStream.packetReceived(p2);
 
         assertEquals(1, unreliableStream.inQueue.size());
     }
@@ -174,8 +174,8 @@ public class UnreliableStreamTest {
         seq = 40000;
         Packet p2 = new Packet.Builder().sequence(seq).build();
 
-        unreliableStream.packetReceived(serverAddress, p1);
-        unreliableStream.packetReceived(serverAddress, p2);
+        unreliableStream.packetReceived(p1);
+        unreliableStream.packetReceived(p2);
 
         assertEquals(1, unreliableStream.inQueue.size());
     }
