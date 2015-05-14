@@ -21,6 +21,7 @@ public interface ConnectionHandler {
     /**
      * Called when the connection is closed. No further callbacks will be made for this ConnectionHandler
      * after onClose is called.
+     * It is invalid to call step again on this Connection, doing so will result in an exception.
      */
     void onClose();
 

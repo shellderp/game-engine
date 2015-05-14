@@ -3,7 +3,6 @@ package shellderp.game.network;
 import shellderp.game.GameStep;
 
 import java.io.IOException;
-import java.net.ProtocolException;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -125,12 +124,7 @@ public class ReliableStream implements GameStep {
     void packetReceived(Packet packet) throws IOException {
         if (packet.hasAck()) {
             synchronized (window) {
-                try {
-                    window.ackReceived(packet.getAckSequence());
-                } catch (ProtocolException ex) {
-                    connection.close();
-                    throw ex;
-                }
+                window.ackReceived(packet.getAckSequence());
             }
 
             // This packet may be unreliable, since we allow piggy-backing ACKs on any send.
@@ -145,7 +139,7 @@ public class ReliableStream implements GameStep {
             }
         }
 
-        if (!packet.isReliable()) {
+        if (!packet.isReliable()) {  // sanity check for packet dispatching logic
             throw new IllegalArgumentException("reliable stream got unreliable packet with no ACK");
         }
 

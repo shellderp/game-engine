@@ -76,7 +76,7 @@ public class UnreliableStream implements GameStep {
      * @param packet The packet received on the stream, must not be marked reliable.
      */
     void packetReceived(Packet packet) {
-        if (packet.isReliable()) {
+        if (packet.isReliable()) {  // sanity check for packet dispatching logic
             throw new IllegalArgumentException("unreliable stream got reliable packet");
         }
 

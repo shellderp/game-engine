@@ -1,5 +1,7 @@
 package shellderp.game.network;
 
+import shellderp.game.GameStep;
+
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.HashMap;
@@ -15,7 +17,7 @@ import java.util.logging.Logger;
  * <p>
  * Created by: Mike
  */
-public class Server {
+public class Server implements GameStep {
 
     private final Socket socket;
 
@@ -115,8 +117,12 @@ public class Server {
             Connection connection = clients.get(fromAddress);
             try {
                 connection.packetReceived(fromAddress, packet);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "IOException in processing client", e);
+            } catch (Throwable t) {
+                // Catch any exception thrown in client processing so that it doesn't crash the server.
+                logger.log(Level.WARNING,
+                           "uncaught Throwable in Connection packet processing, closing connection " +
+                           connection, t);
+                connection.close();
             }
             return;
         }

@@ -1,7 +1,7 @@
 package shellderp.game;
 
 /**
- * Simpler timer. Starts inactive.
+ * Simple timer. Starts inactive.
  *
  * Created by Mike on 2015-04-12.
  */

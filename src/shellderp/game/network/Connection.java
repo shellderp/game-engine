@@ -9,6 +9,8 @@ import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * An established connection between two endpoints.
@@ -43,7 +45,7 @@ public class Connection implements GameStep {
      * The runnable that is handling our receiving in a separate thread. If this instance was created from
      * Server, this will be null.
      */
-    private ReceiveThread receiveThread;
+    private volatile ReceiveThread receiveThread;
 
     private enum State {
         OPEN,
@@ -99,6 +101,14 @@ public class Connection implements GameStep {
         return state.get() == State.OPEN;
     }
 
+    @Override
+    public String toString() {
+        return "Connection{" +
+               "endpoint=" + endpoint +
+               ", state=" + state +
+               '}';
+    }
+
     public ReliableStream getReliableStream() {
         return reliableStream;
     }
@@ -115,7 +125,7 @@ public class Connection implements GameStep {
         } catch (IOException e) {
             // We swallow the exception since we don't really care if the send failed, we still consider
             // this closed successfully.
-            e.printStackTrace();
+            logger.log(Level.INFO, "exception when trying to send close packet", e);
         }
 
         markClosed();
@@ -127,11 +137,13 @@ public class Connection implements GameStep {
      * 2. we receive a close packet from the endpoint
      * <p>
      * The close mechanism does not bother acking packets, and instead relies on the reliable stream
-     * timeout to determine lazily when a connection has closed.
+     * timeout to determine (lazily) when a connection has closed.
      */
     private void markClosed() {
         if (!state.compareAndSet(State.OPEN, State.CLOSED_WAITING_FOR_STEP)) {
-            throw new IllegalStateException("connection is already closed");
+            // Connection is already closed, do nothing.
+            logger.info("connection already closed: " + this);
+            return;
         }
 
         if (receiveThread != null) {
@@ -163,11 +175,11 @@ public class Connection implements GameStep {
      *               connected to, the packet will be ignored.
      * @param packet The packet received from our Socket.
      */
-    void packetReceived(SocketAddress from, Packet packet) throws IOException {
+    void packetReceived(SocketAddress from, Packet packet) {
         if (state.get() != State.OPEN) {
             return;
         }
-        // Technically at any point after this, the state could become closed, but there's no harm in
+        // Technically at any point after this, the state could become CLOSED, but there's no harm in
         // processing one extra packet.
 
         if (!from.equals(getEndPoint())) {
@@ -183,8 +195,16 @@ public class Connection implements GameStep {
             return;
         }
 
+        // Note the packet may be dispatched to both reliable and unreliable streams if it contains an
+        // unreliable payload and an ACK is piggybacked on it.
+
         if (packet.isReliable() || packet.hasAck()) {
-            getReliableStream().packetReceived(packet);
+            try {
+                getReliableStream().packetReceived(packet);
+            } catch (IOException e) {
+                e.printStackTrace();
+                close();
+            }
         }
         if (!packet.isReliable() && packet.hasPayload()) {
             getUnreliableStream().packetReceived(packet);
@@ -229,7 +249,7 @@ public class Connection implements GameStep {
      * @throws TimeoutException If the connection attempt times out.
      */
     public static Connection open(SocketAddress target, long timeoutMs, ConnectionHandler handler)
-            throws IOException, TimeoutException {
+            throws IOException, TimeoutException, InterruptedException {
         // Create a new socket, 0 selects any open port.
         final Socket socket = SocketProvider.getDefault().createSocket(new InetSocketAddress(0));
 
@@ -291,11 +311,7 @@ public class Connection implements GameStep {
 
             // Sleep a little before trying to read again, otherwise we burn the CPU.
             // But not too long, or we'll quickly reach the timeout.
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            Thread.sleep(10);
         }
 
         // Send an ACK to finish the connection.
@@ -311,4 +327,5 @@ public class Connection implements GameStep {
         return connection;
     }
 
+    private static final Logger logger = Logger.getLogger(Connection.class.getName());
 }

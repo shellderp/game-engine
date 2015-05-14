@@ -119,8 +119,6 @@ public class ConnectionTest {
         SocketProvider.setDefault(new TestSocketProvider(packet -> false));
         Connection conn = Connection.open(serverAddress, timeout,
                                           new CountOpenConnectionHandler(openedClient));
-
-        server.stop();
     }
 
     class CountOpenConnectionHandler extends ConnectionHandlerAdapter {
