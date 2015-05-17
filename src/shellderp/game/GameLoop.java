@@ -21,30 +21,30 @@ public final class GameLoop implements Loggable {
     }
 
     public void loopForever() throws InterruptedException {
-        long lastIterStartMs = System.currentTimeMillis();
+        Time lastIterStart = Time.now();
 
         while (true) {
-            final long iterStartMs = System.currentTimeMillis();
+            final Time iterStart = Time.now();
 
-            final long timeDeltaMs = iterStartMs - lastIterStartMs;
+            final long timeDeltaMs = iterStart.millisSince(lastIterStart);
 
             for (GameStep gameStep : gameSteps) {
-                // TODO: consider computing a time delta at each step, since the other steps may cause a delay
                 gameStep.step(timeDeltaMs);
             }
 
-            lastIterStartMs = iterStartMs;
+            lastIterStart = iterStart;
 
-            // We want to start the next frame at time iterStartMs + targetSleepMs, but some time has
+            // We want to start the next frame at time iterStart + targetSleepMs, but some time has
             // passed in processing. So we remove the time spent since the start of the iteration.
-            final long iterEndMs = System.currentTimeMillis();
-            final long sleepTimeMs = (iterStartMs - iterEndMs) + targetSleepMs;
+            final Time iterEnd = Time.now();
+            final long sleepTimeMs = iterStart.millisSince(iterEnd) + targetSleepMs;
 
             // TODO: consider keeping metrics of average processing time
 
             if (sleepTimeMs < 0) {
-                logger().warning(String.format("processing time (%d ms) exceeds desired frame rate (%d ms)",
-                                               iterEndMs - iterStartMs, targetSleepMs));
+                logger().warning(String.format(
+                        "processing time (%d ms) exceeds desired frame rate (%d ms)",
+                        iterEnd.millisSince(iterStart), targetSleepMs));
             } else {
                 Thread.sleep(sleepTimeMs);
             }
