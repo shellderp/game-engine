@@ -2,31 +2,36 @@ package shellderp.game;
 
 /**
  * Simple timer. Starts inactive.
- *
+ * <p>
  * Created by Mike on 2015-04-12.
  */
 public class Timer {
 
+    private boolean active = false;
+
     /**
-     * Tracks the last time the timer was started. If 0, then the timer is not active.
+     * Tracks the last time the timer was started.
      */
-    private long startTimeMs = 0;
+    private Time startTime = null;
 
     public boolean isActive() {
-        return startTimeMs != 0;
+        return active;
     }
 
     public void restart() {
-        startTimeMs = System.currentTimeMillis();
+        active = true;
+        startTime = Time.now();
     }
 
     public void stop() {
-        startTimeMs = 0;
+        active = false;
     }
 
     public boolean hasPassed(long timeoutMs) {
-        long now = System.currentTimeMillis();
+        if (!isActive()) {
+            return false;
+        }
 
-        return isActive() && ((now - startTimeMs) > timeoutMs);
+        return Time.now().millisSince(startTime) > timeoutMs;
     }
 }
