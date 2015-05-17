@@ -1,6 +1,7 @@
 package shellderp.game.network;
 
 import shellderp.game.GameStep;
+import shellderp.game.Timer;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -36,7 +37,7 @@ public class Connection implements GameStep {
      */
     private final Socket socket;
     private final SocketAddress endpoint;
-    private final ConnectionHandler handler;
+    private ConnectionHandler handler;
 
     private final ReliableStream reliableStream;
     private final UnreliableStream unreliableStream;
@@ -55,6 +56,12 @@ public class Connection implements GameStep {
 
     // Can rely on this never changing once it is CLOSED, but must consider concurrency otherwise.
     private final AtomicReference<State> state = new AtomicReference<>(State.OPEN);
+
+    /**
+     * We callback onOpen on the first call to step(), so we need to know when the first call is made.
+     * We could callback in the constructor, but this would require the handler to think about thread safety.
+     */
+    private boolean firstStep = true;
 
     /**
      * Keeps track of ack piggybacking. Unfortunately, we have to store this here and not in the
@@ -81,8 +88,6 @@ public class Connection implements GameStep {
         this.reliableStream = new ReliableStream(this, handler, initialSequenceIn, initialSequenceOut,
                                                  piggybackAck);
         this.unreliableStream = new UnreliableStream(this, handler, initialSequenceIn, initialSequenceOut);
-
-        handler.onOpen(this);
     }
 
     void setReceiveThread(ReceiveThread receiveThread) {
@@ -91,6 +96,10 @@ public class Connection implements GameStep {
 
     public SocketAddress getEndPoint() {
         return endpoint;
+    }
+
+    public void setHandler(ConnectionHandler handler) {
+        this.handler = handler;
     }
 
     /**
@@ -142,7 +151,7 @@ public class Connection implements GameStep {
     private void markClosed() {
         if (!state.compareAndSet(State.OPEN, State.CLOSED_WAITING_FOR_STEP)) {
             // Connection is already closed, do nothing.
-            logger.info("connection already closed: " + this);
+            logger.info("connection already closed: " + toString());
             return;
         }
 
@@ -222,6 +231,11 @@ public class Connection implements GameStep {
      */
     @Override
     public void step(long timeDeltaMs) {
+        if (firstStep) {
+            firstStep = false;
+            handler.onOpen(this);
+        }
+
         if (state.get() == State.CLOSED) {
             throw new IllegalStateException("connection is closed");
         } else if (state.get() == State.CLOSED_WAITING_FOR_STEP) {
@@ -254,10 +268,12 @@ public class Connection implements GameStep {
         final Socket socket = SocketProvider.getDefault().createSocket(new InetSocketAddress(0));
 
         // Track when we started, so we can obey the timeout.
-        final long startMs = System.currentTimeMillis();
+        final Timer startTimer = new Timer();
+        startTimer.restart();
         // Track when we sent the last request, so we can retry after timeout, separate from the overall
         // timeout.
-        long lastRequestMs = startMs;
+        final Timer lastRequestTimer = new Timer();
+        lastRequestTimer.restart();
 
         // These will be the initial sequence numbers for creating the (un)reliable streams.
         // They come randomly from Packet.build.
@@ -271,12 +287,11 @@ public class Connection implements GameStep {
             socket.sendDirect(request, target);
         }
 
-        SocketAddress socketAddress;
-
         // Wait for reply, or timeout.
+        ByteBuffer buffer = ByteBuffer.allocate(Packet.MAX_PACKET_SIZE);
         while (true) {
-            ByteBuffer buffer = ByteBuffer.allocate(Packet.MAX_PACKET_SIZE);
-            socketAddress = socket.tryReceive(buffer);
+            buffer.clear();
+            SocketAddress socketAddress = socket.tryReceive(buffer);
             buffer.flip();
 
             // If we get a message from a different address than endpoint, ignore it.
@@ -291,13 +306,11 @@ public class Connection implements GameStep {
             }
 
             // We didn't get a packet, or didn't get one that establishes our connection.
-
-            long nowMs = System.currentTimeMillis();
-            if (nowMs - startMs > timeoutMs) {
+            if (startTimer.hasPassed(timeoutMs)) {
                 throw new TimeoutException("connect timed out");
             }
 
-            if (nowMs - lastRequestMs > ReliableStream.DEFAULT_PACKET_LOST_TIMEOUT_MS) {
+            if (lastRequestTimer.hasPassed(ReliableStream.DEFAULT_PACKET_LOST_TIMEOUT_MS)) {
                 // Assume the first packet was lost, or the server's reply was lost.
                 // We send a new request and invalidate the old one by storing the new sequence.
                 Packet request = new Packet.Builder().sequence(Packet.nextSequence(sequenceOut))
@@ -306,7 +319,7 @@ public class Connection implements GameStep {
                 sequenceOut = Packet.nextSequence(request.getSequence());
                 socket.sendDirect(request, target);
 
-                lastRequestMs = nowMs;
+                lastRequestTimer.restart();
             }
 
             // Sleep a little before trying to read again, otherwise we burn the CPU.

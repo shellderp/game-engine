@@ -1,5 +1,7 @@
 package shellderp.game.network;
 
+import shellderp.game.Timer;
+
 import java.net.SocketAddress;
 
 /**
@@ -13,16 +15,14 @@ class PendingConnection {
     private final int serverSequence;
 
     // Not used in comparison, but for removing old entries.
-    private transient final long timeAddedMs;
+    final Timer addedTimer;
 
     PendingConnection(SocketAddress socketAddress, int serverSequence) {
         this.socketAddress = socketAddress;
         this.serverSequence = serverSequence;
-        this.timeAddedMs = System.currentTimeMillis();
-    }
 
-    public long getTimeAddedMs() {
-        return timeAddedMs;
+        addedTimer = new Timer();
+        addedTimer.restart();
     }
 
     @Override
@@ -51,14 +51,5 @@ class PendingConnection {
         int result = socketAddress.hashCode();
         result = 31 * result + serverSequence;
         return result;
-    }
-
-    @Override
-    public String toString() {
-        return "PendingConnection{" +
-               "socketAddress=" + socketAddress +
-               ", serverSequence=" + serverSequence +
-               ", timeAddedMs=" + timeAddedMs +
-               '}';
     }
 }

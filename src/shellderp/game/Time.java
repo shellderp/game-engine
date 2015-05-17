@@ -6,7 +6,7 @@ package shellderp.game;
  *
  * Created by: Mike
  */
-class Time {
+public final class Time {
     private final long time;
 
     private Time(long time) {
@@ -17,7 +17,7 @@ class Time {
         return (time - since.time) / 1_000_000;
     }
 
-    static Time now() {
+    public static Time now() {
         // We prefer to use nanoTime since it is the CPU clock time.
         // In comparison, currentTimeMillis can change if the user changes the system time.
         return new Time(System.nanoTime());

@@ -4,6 +4,7 @@ import shellderp.game.GameStep;
 
 import java.awt.Canvas;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.image.BufferStrategy;
 
 /**
@@ -55,7 +56,7 @@ public final class GameCanvas extends Canvas implements GameStep {
                 // Clear the previous rendering.
                 graphics.clearRect(0, 0, getWidth(), getHeight());
                 // Render to graphics.
-                renderable.render(graphics);
+                renderable.render((Graphics2D) graphics);
 
                 // Dispose the graphics
                 graphics.dispose();

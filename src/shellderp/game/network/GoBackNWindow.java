@@ -1,5 +1,6 @@
 package shellderp.game.network;
 
+import shellderp.game.Time;
 import shellderp.game.Timer;
 
 import java.net.ProtocolException;
@@ -16,15 +17,15 @@ class GoBackNWindow {
 
     private static class WindowEntry {
         final Packet packet;
-        long timeLastSent;
+        Time lastSentTime;
 
         private WindowEntry(Packet packet) {
             this.packet = packet;
-            this.timeLastSent = System.currentTimeMillis();
+            this.lastSentTime = Time.now();
         }
 
         public void markResent() {
-            timeLastSent = System.currentTimeMillis();
+            lastSentTime = Time.now();
         }
     }
 
@@ -161,8 +162,8 @@ class GoBackNWindow {
         }
 
         for (int i = 0; i < numToRemove; i++) {
-            long roundTripTime = System.currentTimeMillis() - sent.getFirst().timeLastSent;
-            variableTimeout.updateFromSample(roundTripTime);
+            long roundTripTimeMs = Time.now().millisSince(sent.getFirst().lastSentTime);
+            variableTimeout.updateFromSample(roundTripTimeMs);
 
             sent.removeFirst();
 

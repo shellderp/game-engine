@@ -42,9 +42,9 @@ public class VariableTimeout {
         return (timeoutMs < 10) ? 10 : timeoutMs;
     }
 
-    public void updateFromSample(long sampleRtt) {
-        estimatedRtt = (long) ((1 - alpha) * estimatedRtt + alpha * sampleRtt);
-        deviationRtt = (long) ((1 - beta) * deviationRtt + beta * Math.abs(sampleRtt - estimatedRtt));
+    public void updateFromSample(long sampleRttMs) {
+        estimatedRtt = (long) ((1 - alpha) * estimatedRtt + alpha * sampleRttMs);
+        deviationRtt = (long) ((1 - beta) * deviationRtt + beta * Math.abs(sampleRttMs - estimatedRtt));
 
         gotSample = true;
     }

@@ -91,7 +91,7 @@ public class Server implements GameStep {
         while (iterator.hasNext()) {
             PendingConnection pendingConnection = iterator.next();
 
-            if (System.currentTimeMillis() - pendingConnection.getTimeAddedMs() > timeToKeepPendingConnsMs) {
+            if (pendingConnection.addedTimer.hasPassed(timeToKeepPendingConnsMs)) {
                 iterator.remove();
             } else {
                 // Since the pending connections are in order of time added, we can stop now since the rest

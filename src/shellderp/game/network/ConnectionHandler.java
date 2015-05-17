@@ -3,6 +3,8 @@ package shellderp.game.network;
 import java.nio.ByteBuffer;
 
 /**
+ * All callbacks will only be called inside a call to Connection::step(), so thread safety is not a concern.
+ *
  * Created by: Mike
  */
 public interface ConnectionHandler {
@@ -14,9 +16,6 @@ public interface ConnectionHandler {
      *                   ConnectionHandler instance will have the same Connection object.
      */
     void onOpen(Connection connection);
-
-    // The following callbacks will only be called inside a call to step(), and thus need not worry about
-    // thread safety.
 
     /**
      * Called when the connection is closed. No further callbacks will be made for this ConnectionHandler
