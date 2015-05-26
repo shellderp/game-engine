@@ -42,7 +42,7 @@ public final class GameLoop implements Loggable {
             // TODO: consider keeping metrics of average processing time
 
             if (sleepTimeMs < 0) {
-                logger().warning(String.format(
+                logger().info(String.format(
                         "processing time (%d ms) exceeds desired frame rate (%d ms)",
                         iterEnd.millisSince(iterStart), targetSleepMs));
             } else {

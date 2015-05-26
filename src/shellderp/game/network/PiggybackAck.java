@@ -35,11 +35,11 @@ public class PiggybackAck {
      */
     private final static long timeoutMs = 50;
 
+    private final Timer timer = new Timer();
+
     private boolean hasAck = false;
 
     private int ackSequence;
-
-    private Timer timer = new Timer();
 
     public synchronized Optional<Integer> getAndClearAck() {
         if (!hasAck) {

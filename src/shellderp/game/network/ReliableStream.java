@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * <p>
  * Created by: Mike
  */
-public class ReliableStream implements GameStep {
+public class ReliableStream implements GameStep, SendableStream {
 
     /**
      * We need a default value for how long to wait before we assume a packet is lost and needs to be resent.

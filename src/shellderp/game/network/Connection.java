@@ -103,11 +103,15 @@ public class Connection implements GameStep {
     }
 
     /**
-     * @return true if the connection is open. This is only updated when we receive a close message from the
-     * endpoint or have a reliable stream timeout, or close() is called.
+     * @return true if the connection is open. We consider the connection open until we receive a close
+     * message from the endpoint, have a reliable stream timeout, or close() is called.
+     * <p>
+     * Implementation note:
+     * This is only updated after a step() call, enabling the handler to call close() during a step() (eg
+     * in a on*Message handler) and the next Server.step() will still call our step() again after this.
      */
     public boolean isOpen() {
-        return state.get() == State.OPEN;
+        return state.get() != State.CLOSED;
     }
 
     @Override
@@ -240,7 +244,7 @@ public class Connection implements GameStep {
             throw new IllegalStateException("connection is closed");
         } else if (state.get() == State.CLOSED_WAITING_FOR_STEP) {
             state.set(State.CLOSED);
-            handler.onClose();
+            handler.onClose(this);
             return;
         }
 

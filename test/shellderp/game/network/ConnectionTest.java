@@ -8,6 +8,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 
 public class ConnectionTest {
@@ -31,6 +32,8 @@ public class ConnectionTest {
         Connection conn = Connection.open(serverAddress, timeout,
                                           new CountOpenConnectionHandler(openedClient));
         Thread.sleep(50); // Give server a chance to read the ACK from conn.
+        conn.step(0);
+        server.step(0);
         assertEquals(1, openedServer.get());
         assertEquals(1, openedClient.get());
 
@@ -46,25 +49,28 @@ public class ConnectionTest {
 
         Server server = new Server(serverAddress, () -> new CountOpenConnectionHandler(openedServer) {
             @Override
-            public void onClose() {
+            public void onClose(Connection connection) {
                 closedServer.getAndIncrement();
             }
         });
         Connection conn = Connection.open(serverAddress, timeout,
                                           new CountOpenConnectionHandler(openedClient) {
                                               @Override
-                                              public void onClose() {
+                                              public void onClose(Connection connection) {
                                                   closedClient.getAndIncrement();
                                               }
                                           });
+        conn.step(0);
+        server.step(0);
+        assertTrue(conn.isOpen());
         conn.close();
+        assertTrue(conn.isOpen());
+        conn.step(0); // Connection only updates isOpen() status after step().
         assertFalse(conn.isOpen());
         Thread.sleep(50); // Give server a chance to read the ACK from conn.
 
         assertEquals(1, openedServer.get());
         assertEquals(1, openedClient.get());
-
-        conn.step(0);
         assertEquals(1, closedClient.get());
 
         server.step(0);
@@ -85,6 +91,8 @@ public class ConnectionTest {
         Connection conn = Connection.open(serverAddress, timeout,
                                           new CountOpenConnectionHandler(openedClient));
         Thread.sleep(50); // Give server a chance to read the ACK from conn.
+        conn.step(0);
+        server.step(0);
         assertEquals(1, openedServer.get());
         assertEquals(1, openedClient.get());
 
@@ -103,6 +111,8 @@ public class ConnectionTest {
         Connection conn = Connection.open(serverAddress, timeout,
                                           new CountOpenConnectionHandler(openedClient));
         Thread.sleep(50); // Give server a chance to read the ACK from conn.
+        conn.step(0);
+        server.step(0);
         assertEquals(1, openedServer.get());
         assertEquals(1, openedClient.get());
 

@@ -21,8 +21,9 @@ public interface ConnectionHandler {
      * Called when the connection is closed. No further callbacks will be made for this ConnectionHandler
      * after onClose is called.
      * It is invalid to call step again on this Connection, doing so will result in an exception.
+     * @param connection
      */
-    void onClose();
+    void onClose(Connection connection);
 
     void onReliableRead(Connection connection, ByteBuffer payload);
 

@@ -68,7 +68,7 @@ public class Server implements GameStep {
         receiveThread.stop();
 
         for (Iterator<Connection> iterator = clients.values().iterator(); iterator.hasNext(); ) {
-            Connection client = iterator.next();
+            final Connection client = iterator.next();
             client.close();
             iterator.remove();
         }
@@ -87,9 +87,9 @@ public class Server implements GameStep {
     }
 
     private void removeExpiredPendingConnections() {
-        Iterator<PendingConnection> iterator = pendingConnections.keySet().iterator();
+        final Iterator<PendingConnection> iterator = pendingConnections.keySet().iterator();
         while (iterator.hasNext()) {
-            PendingConnection pendingConnection = iterator.next();
+            final PendingConnection pendingConnection = iterator.next();
 
             if (pendingConnection.addedTimer.hasPassed(timeToKeepPendingConnsMs)) {
                 iterator.remove();
@@ -114,7 +114,7 @@ public class Server implements GameStep {
     synchronized void packetReceived(SocketAddress fromAddress, Packet packet) {
         // If this address is already connected, we dispatch to the connection instance.
         if (clients.containsKey(fromAddress)) {
-            Connection connection = clients.get(fromAddress);
+            final Connection connection = clients.get(fromAddress);
             try {
                 connection.packetReceived(fromAddress, packet);
             } catch (Throwable t) {
@@ -131,22 +131,22 @@ public class Server implements GameStep {
         // the pending connection has expired.
         if (packet.hasAck()) {
             // Create a dummy to probe the set of pending connections.
-            PendingConnection probe = new PendingConnection(fromAddress,
-                                                            packet.getAckSequence());
+            final PendingConnection probe = new PendingConnection(fromAddress, packet.getAckSequence());
             if (pendingConnections.containsKey(probe)) {
-                int clientSequence = pendingConnections.remove(probe);
-                Connection client = new Connection(socket, fromAddress, clientSequence,
-                                                   packet.getAckSequence(), connectionHandlerProvider.get());
+                final int clientSequence = pendingConnections.remove(probe);
+                final Connection client = new Connection(socket, fromAddress, clientSequence,
+                                                         packet.getAckSequence(),
+                                                         connectionHandlerProvider.get());
                 clients.put(fromAddress, client);
             } else {
                 logger.info("got ACK with no corresponding pending connection " + probe);
             }
         } else if (packet.isConnectRequest()) {
             if (allowConnection.test(fromAddress)) {
-                Packet reply = new Packet.Builder().randomSequence()
-                                                   .connectRequest()
-                                                   .ack(Packet.nextSequence(packet.getSequence()))
-                                                   .build();
+                final Packet reply = new Packet.Builder().randomSequence()
+                                                         .connectRequest()
+                                                         .ack(Packet.nextSequence(packet.getSequence()))
+                                                         .build();
                 // Track that we received a connect request from this address,
                 // so we know that on a follow up ACK the connection is established.
                 // We track it with our outgoing sequence since that is the ACK we expect back.

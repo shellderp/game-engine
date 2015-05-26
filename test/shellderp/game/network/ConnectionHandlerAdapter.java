@@ -14,7 +14,7 @@ public class ConnectionHandlerAdapter implements ConnectionHandler {
     }
 
     @Override
-    public void onClose() {
+    public void onClose(Connection connection) {
 
     }
 

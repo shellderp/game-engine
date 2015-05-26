@@ -231,7 +231,7 @@ public class ReliableStreamTest {
             }
 
             @Override
-            public void onClose() {
+            public void onClose(Connection connection) {
                 numClosed.getAndIncrement();
             }
         });

@@ -14,7 +14,7 @@ import java.util.logging.Logger;
  * <p>
  * Created by: Mike
  */
-public class UnreliableStream implements GameStep {
+public class UnreliableStream implements GameStep, SendableStream {
 
     private final Connection connection;
     private final ConnectionHandler handler;
