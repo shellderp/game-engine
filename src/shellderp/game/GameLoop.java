@@ -7,7 +7,6 @@ import java.util.List;
  * Created by: Mike
  */
 public final class GameLoop implements Loggable {
-
   private final int targetSleepMs;
 
   private final List<GameStep> gameSteps = new ArrayList<>();
@@ -20,6 +19,7 @@ public final class GameLoop implements Loggable {
     gameSteps.add(step);
   }
 
+  @SuppressWarnings("InfiniteLoopStatement")
   public void loopForever() throws InterruptedException {
     Time lastIterStart = Time.now();
 
@@ -43,8 +43,7 @@ public final class GameLoop implements Loggable {
 
       if (sleepTimeMs < 0) {
         if (sleepTimeMs < -targetSleepMs) {
-          logger().info(String.format(
-              "processing time (%d ms) exceeds two frames (%d ms per frame)",
+          logger().info(String.format("processing time (%d ms) exceeds two frames (%d ms per frame)",
               iterEnd.millisSince(iterStart), targetSleepMs));
         }
       } else {
@@ -52,5 +51,4 @@ public final class GameLoop implements Loggable {
       }
     }
   }
-
 }
