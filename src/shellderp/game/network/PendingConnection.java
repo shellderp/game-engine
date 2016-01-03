@@ -11,45 +11,45 @@ import java.net.SocketAddress;
  * Created by: Mike
  */
 class PendingConnection {
-    private final SocketAddress socketAddress;
-    private final int serverSequence;
+  private final SocketAddress socketAddress;
+  private final int serverSequence;
 
-    // Not used in comparison, but for removing old entries.
-    final Timer addedTimer;
+  // Not used in comparison, but for removing old entries.
+  final Timer addedTimer;
 
-    PendingConnection(SocketAddress socketAddress, int serverSequence) {
-        this.socketAddress = socketAddress;
-        this.serverSequence = serverSequence;
+  PendingConnection(SocketAddress socketAddress, int serverSequence) {
+    this.socketAddress = socketAddress;
+    this.serverSequence = serverSequence;
 
-        addedTimer = new Timer();
-        addedTimer.restart();
+    addedTimer = new Timer();
+    addedTimer.restart();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+    PendingConnection that = (PendingConnection) o;
 
-        PendingConnection that = (PendingConnection) o;
-
-        if (serverSequence != that.serverSequence) {
-            return false;
-        }
-        if (!socketAddress.equals(that.socketAddress)) {
-            return false;
-        }
-
-        return true;
+    if (serverSequence != that.serverSequence) {
+      return false;
+    }
+    if (!socketAddress.equals(that.socketAddress)) {
+      return false;
     }
 
-    @Override
-    public int hashCode() {
-        int result = socketAddress.hashCode();
-        result = 31 * result + serverSequence;
-        return result;
-    }
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = socketAddress.hashCode();
+    result = 31 * result + serverSequence;
+    return result;
+  }
 }

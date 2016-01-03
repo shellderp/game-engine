@@ -12,75 +12,80 @@ import java.awt.image.BufferStrategy;
  */
 public final class GameCanvas extends Canvas implements GameStep {
 
-    private final Renderable renderable;
+  private final Renderable renderable;
+  private BufferStrategy strategy;
 
-    /**
-     * This can't be final because we can only create it after we are displayable.
-     */
-    private BufferStrategy strategy;
+  public GameCanvas(Renderable renderable) {
+    this.renderable = renderable;
 
-    public GameCanvas(Renderable renderable) {
-        this.renderable = renderable;
+    setIgnoreRepaint(true);
+  }
 
-        setIgnoreRepaint(true);
+  /**
+   * Called when the canvas is first displayable (isDisplayable() is true) to create the buffer strategy.
+   */
+  private void setupOffscreenBuffer() {
+    createBufferStrategy(2);
+    strategy = getBufferStrategy();
+  }
+
+  /**
+   * Called when we change between fullscreen and windowed to signal we need to recreate the buffer.
+   */
+  public void invalidateBuffer() {
+    if (strategy != null) {
+      strategy.dispose();
+    }
+    strategy = null;
+  }
+
+  @Override
+  public void step(long timeDeltaMs) {
+    if (!isDisplayable()) {
+      return;
     }
 
-    /**
-     * Called when the canvas is first displayable (isDisplayable() is true) to create the buffer strategy.
-     */
-    private void setupOnceDisplayable() {
-        createBufferStrategy(2);
-        strategy = getBufferStrategy();
+    // We are now displayable for the first time since being invalidated, recreate our buffer strategy.
+    if (strategy == null) {
+      setupOffscreenBuffer();
     }
 
-    @Override
-    public void step(long timeDeltaMs) {
-        if (!isDisplayable()) {
-            return;
-        }
+    // Render single frame, repeating if the image is lost.
+    do {
+      // The following loop ensures that the contents of the drawing buffer
+      // are consistent in case the underlying surface was recreated
+      do {
+        // Get a new graphics context every time through the loop
+        // to make sure the strategy is validated
+        Graphics graphics = strategy.getDrawGraphics();
 
-        // Displayable for the first time.
-        if (strategy == null) {
-            setupOnceDisplayable();
-        }
+        // Clear the previous rendering.
+        graphics.clearRect(0, 0, getWidth(), getHeight());
+        // Render the renderable onto the buffer graphics.
+        renderable.render((Graphics2D) graphics);
 
-        // Render single frame
-        do {
-            // The following loop ensures that the contents of the drawing buffer
-            // are consistent in case the underlying surface was recreated
-            do {
-                // Get a new graphics context every time through the loop
-                // to make sure the strategy is validated
-                Graphics graphics = strategy.getDrawGraphics();
+        graphics.dispose();
 
-                // Clear the previous rendering.
-                graphics.clearRect(0, 0, getWidth(), getHeight());
-                // Render to graphics.
-                renderable.render((Graphics2D) graphics);
+        // Repeat the rendering if the drawing buffer contents
+        // were restored
+      } while (strategy.contentsRestored());
 
-                // Dispose the graphics
-                graphics.dispose();
+      // Display the buffer on screen
+      strategy.show();
 
-                // Repeat the rendering if the drawing buffer contents
-                // were restored
-            } while (strategy.contentsRestored());
+      // Repeat the rendering if the drawing buffer was lost
+    } while (strategy.contentsLost());
+  }
 
-            // Display the buffer
-            strategy.show();
+  @Override
+  public void update(Graphics g) {
+    // We handle repainting so this should never be called.
+    throw new IllegalStateException();
+  }
 
-            // Repeat the rendering if the drawing buffer was lost
-        } while (strategy.contentsLost());
-    }
-
-    @Override
-    public void update(Graphics g) {
-        // We handle repainting so this should never be called.
-        throw new IllegalStateException();
-    }
-
-    @Override
-    public void paint(Graphics g) {
-        // We handle repainting so this should never be called.
-        throw new IllegalStateException();
-    }
+  @Override
+  public void paint(Graphics g) {
+    // We handle repainting so this should never be called.
+    throw new IllegalStateException();
+  }
 }

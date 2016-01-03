@@ -28,45 +28,45 @@ import java.util.Optional;
  */
 public class PiggybackAck {
 
-    /**
-     * How long we wait after the first ack was set until sending a payload-less packet.
-     * Since we expect the game to send frequent location packets, we keep this close to the game tick rate.
-     * This should be kept low, since we are limiting what the other end can send by not sending an ack.
-     */
-    private final static long timeoutMs = 50;
+  /**
+   * How long we wait after the first ack was set until sending a payload-less packet.
+   * Since we expect the game to send frequent location packets, we keep this close to the game tick rate.
+   * This should be kept low, since we are limiting what the other end can send by not sending an ack.
+   */
+  private final static long timeoutMs = 50;
 
-    private final Timer timer = new Timer();
+  private final Timer timer = new Timer();
 
-    private boolean hasAck = false;
+  private boolean hasAck = false;
 
-    private int ackSequence;
+  private int ackSequence;
 
-    public synchronized Optional<Integer> getAndClearAck() {
-        if (!hasAck) {
-            return Optional.empty();
-        }
-
-        hasAck = false;
-        timer.stop();
-
-        return Optional.of(ackSequence);
+  public synchronized Optional<Integer> getAndClearAck() {
+    if (!hasAck) {
+      return Optional.empty();
     }
 
-    public synchronized Optional<Integer> getAndClearAckIfTimeoutPassed() {
-        if (timer.hasPassed(timeoutMs)) {
-            return getAndClearAck();
-        }
+    hasAck = false;
+    timer.stop();
 
-        return Optional.empty();
+    return Optional.of(ackSequence);
+  }
+
+  public synchronized Optional<Integer> getAndClearAckIfTimeoutPassed() {
+    if (timer.hasPassed(timeoutMs)) {
+      return getAndClearAck();
     }
 
-    public synchronized void setAckSequence(int ackSequence) {
-        this.ackSequence = ackSequence;
-        hasAck = true;
+    return Optional.empty();
+  }
 
-        if (!timer.isActive()) {
-            timer.restart();
-        }
+  public synchronized void setAckSequence(int ackSequence) {
+    this.ackSequence = ackSequence;
+    hasAck = true;
+
+    if (!timer.isActive()) {
+      timer.restart();
     }
+  }
 
 }

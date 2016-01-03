@@ -10,7 +10,7 @@ import java.util.logging.Logger;
  * Created by: Mike
  */
 public interface Loggable {
-    default Logger logger() {
-        return Logger.getLogger(getClass().getName());
-    }
+  default Logger logger() {
+    return Logger.getLogger(getClass().getName());
+  }
 }

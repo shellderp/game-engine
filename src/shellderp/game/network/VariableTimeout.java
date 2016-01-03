@@ -7,45 +7,45 @@ package shellderp.game.network;
  */
 public class VariableTimeout {
 
-    /**
-     * How much we value previous estimatedRtt vs the current sample.
-     */
-    private final static float alpha = 0.125f;
+  /**
+   * How much we value previous estimatedRtt vs the current sample.
+   */
+  private final static float alpha = 0.125f;
 
-    /**
-     * How much we value previous deviationRtt vs the current sample.
-     */
-    private final static float beta = 0.25f;
+  /**
+   * How much we value previous deviationRtt vs the current sample.
+   */
+  private final static float beta = 0.25f;
 
-    private long estimatedRtt;
+  private long estimatedRtt;
 
-    private long deviationRtt;
+  private long deviationRtt;
 
-    /**
-     * A default value to use until we get some sample RTT's.
-     */
-    private final long defaultTimeoutMs;
-    private boolean gotSample = false;
+  /**
+   * A default value to use until we get some sample RTT's.
+   */
+  private final long defaultTimeoutMs;
+  private boolean gotSample = false;
 
-    public VariableTimeout(long defaultTimeoutMs) {
-        this.defaultTimeoutMs = defaultTimeoutMs;
-        estimatedRtt = 0;
-        deviationRtt = 0;
+  public VariableTimeout(long defaultTimeoutMs) {
+    this.defaultTimeoutMs = defaultTimeoutMs;
+    estimatedRtt = 0;
+    deviationRtt = 0;
+  }
+
+  public long getTimeoutMs() {
+    if (!gotSample) {
+      return defaultTimeoutMs;
     }
 
-    public long getTimeoutMs() {
-        if (!gotSample) {
-            return defaultTimeoutMs;
-        }
+    long timeoutMs = estimatedRtt + (4 * deviationRtt);
+    return (timeoutMs < 10) ? 10 : timeoutMs;
+  }
 
-        long timeoutMs = estimatedRtt + (4 * deviationRtt);
-        return (timeoutMs < 10) ? 10 : timeoutMs;
-    }
+  public void updateFromSample(long sampleRttMs) {
+    estimatedRtt = (long) ((1 - alpha) * estimatedRtt + alpha * sampleRttMs);
+    deviationRtt = (long) ((1 - beta) * deviationRtt + beta * Math.abs(sampleRttMs - estimatedRtt));
 
-    public void updateFromSample(long sampleRttMs) {
-        estimatedRtt = (long) ((1 - alpha) * estimatedRtt + alpha * sampleRttMs);
-        deviationRtt = (long) ((1 - beta) * deviationRtt + beta * Math.abs(sampleRttMs - estimatedRtt));
-
-        gotSample = true;
-    }
+    gotSample = true;
+  }
 }

@@ -17,71 +17,71 @@ import java.nio.channels.Selector;
  */
 class ReceiveThread implements Runnable {
 
-    private final Socket socket;
-    private final Receiver receiver;
+  private final Socket socket;
+  private final Receiver receiver;
 
-    private final Selector selector;
+  private final Selector selector;
 
-    private volatile boolean running = true;
+  private volatile boolean running = true;
 
-    public ReceiveThread(Socket socket, Receiver receiver) throws IOException {
-        this.socket = socket;
-        this.receiver = receiver;
+  public ReceiveThread(Socket socket, Receiver receiver) throws IOException {
+    this.socket = socket;
+    this.receiver = receiver;
 
-        selector = Selector.open();
+    selector = Selector.open();
 
-        socket.register(selector, SelectionKey.OP_READ);
-    }
+    socket.register(selector, SelectionKey.OP_READ);
+  }
 
-    @Override
-    public void run() {
-        ByteBuffer buffer = ByteBuffer.allocate(Packet.MAX_PACKET_SIZE);
+  @Override
+  public void run() {
+    ByteBuffer buffer = ByteBuffer.allocate(Packet.MAX_PACKET_SIZE);
 
-        while (true) {
-            try {
-                selector.select();
+    while (true) {
+      try {
+        selector.select();
 
-                if (!running) {
-                    break;
-                }
-
-                // We only have one socket to worry about, so no need to iterate over selectedKeys.
-                selector.selectedKeys().clear();
-
-                readSocketUntilDone(buffer);
-            } catch (IOException e) {
-                running = false;
-                e.printStackTrace();
-            }
+        if (!running) {
+          break;
         }
 
-        try {
-            selector.close();
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // We only have one socket to worry about, so no need to iterate over selectedKeys.
+        selector.selectedKeys().clear();
+
+        readSocketUntilDone(buffer);
+      } catch (IOException e) {
+        running = false;
+        e.printStackTrace();
+      }
     }
 
-    private void readSocketUntilDone(ByteBuffer buffer) throws IOException {
-        while (true) {
-            SocketAddress socketAddress = socket.tryReceive(buffer);
-            if (socketAddress == null) {
-                break;
-            }
-
-            buffer.flip();
-
-            Packet packet = Packet.fromBuffer(buffer);
-            receiver.packetReceived(socketAddress, packet);
-            buffer.clear(); // Reset for the next read.
-        }
+    try {
+      selector.close();
+      socket.close();
+    } catch (IOException e) {
+      e.printStackTrace();
     }
+  }
 
-    public void stop() {
-        if (running) {
-            running = false;
-            selector.wakeup();
-        }
+  private void readSocketUntilDone(ByteBuffer buffer) throws IOException {
+    while (true) {
+      SocketAddress socketAddress = socket.tryReceive(buffer);
+      if (socketAddress == null) {
+        break;
+      }
+
+      buffer.flip();
+
+      Packet packet = Packet.fromBuffer(buffer);
+      receiver.packetReceived(socketAddress, packet);
+      buffer.clear(); // Reset for the next read.
     }
+  }
+
+  public void stop() {
+    if (running) {
+      running = false;
+      selector.wakeup();
+    }
+  }
 }

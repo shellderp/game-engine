@@ -10,6 +10,6 @@ import java.net.SocketAddress;
  */
 interface Receiver {
 
-    void packetReceived(SocketAddress from, Packet packet) throws IOException;
+  void packetReceived(SocketAddress from, Packet packet) throws IOException;
 
 }

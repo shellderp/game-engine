@@ -21,98 +21,98 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class SocketStub extends Socket {
 
-    /**
-     * We keep a map of all socket stubs so we can simulate sends by adding to eachothers inQueues.
-     */
-    private static final HashMap<SocketAddress, SocketStub> allSockets = new HashMap<>();
-    private final SocketAddress bindAddress;
+  /**
+   * We keep a map of all socket stubs so we can simulate sends by adding to eachothers inQueues.
+   */
+  private static final HashMap<SocketAddress, SocketStub> allSockets = new HashMap<>();
+  private final SocketAddress bindAddress;
 
-    private int totalSent;
+  private int totalSent;
 
-    static class Message {
-        final SocketAddress source;
-        final ByteBuffer buffer;
+  static class Message {
+    final SocketAddress source;
+    final ByteBuffer buffer;
 
-        Message(SocketAddress source, ByteBuffer buffer) {
-            this.source = source;
-            this.buffer = buffer;
-        }
+    Message(SocketAddress source, ByteBuffer buffer) {
+      this.source = source;
+      this.buffer = buffer;
+    }
+  }
+
+  private final ConcurrentLinkedQueue<Message> inQueue = new ConcurrentLinkedQueue<>();
+
+  private final Pipe pipe;
+
+  /**
+   * @param bindAddress The local address to listen on.
+   * @throws IOException If binding to bindAddress fails.
+   */
+  public SocketStub(SocketAddress bindAddress) throws IOException {
+    super();
+
+    while (allSockets.containsKey(bindAddress)) {
+      InetSocketAddress addr = (InetSocketAddress) bindAddress;
+      bindAddress = new InetSocketAddress(addr.getAddress(), addr.getPort() + 1);
+    }
+    this.bindAddress = bindAddress;
+    allSockets.put(bindAddress, this);
+
+    pipe = Pipe.open();
+    pipe.source().configureBlocking(false);
+    pipe.sink().configureBlocking(false);
+  }
+
+  @Override
+  public SelectionKey register(Selector selector, int ops) throws ClosedChannelException {
+    return pipe.source().register(selector, ops);
+  }
+
+  @Override
+  public synchronized SocketAddress tryReceive(ByteBuffer dst) throws IOException {
+    // Ignore what we read from pipe; we use it just for signalling.
+    {
+      ByteBuffer dummy = ByteBuffer.allocate(dst.capacity());
+      pipe.source().read(dummy);
     }
 
-    private final ConcurrentLinkedQueue<Message> inQueue = new ConcurrentLinkedQueue<>();
-
-    private final Pipe pipe;
-
-    /**
-     * @param bindAddress The local address to listen on.
-     * @throws IOException If binding to bindAddress fails.
-     */
-    public SocketStub(SocketAddress bindAddress) throws IOException {
-        super();
-
-        while (allSockets.containsKey(bindAddress)) {
-            InetSocketAddress addr = (InetSocketAddress) bindAddress;
-            bindAddress = new InetSocketAddress(addr.getAddress(), addr.getPort() + 1);
-        }
-        this.bindAddress = bindAddress;
-        allSockets.put(bindAddress, this);
-
-        pipe = Pipe.open();
-        pipe.source().configureBlocking(false);
-        pipe.sink().configureBlocking(false);
+    Message m = inQueue.poll();
+    if (m == null) {
+      return null;
     }
 
-    @Override
-    public SelectionKey register(Selector selector, int ops) throws ClosedChannelException {
-        return pipe.source().register(selector, ops);
+    m.buffer.rewind();
+    dst.put(m.buffer);
+
+    return m.source;
+  }
+
+  @Override
+  public synchronized int sendDirect(Packet packet, SocketAddress endPoint) throws IOException {
+    if (!allSockets.containsKey(endPoint)) {
+      throw new UnresolvedAddressException();
     }
 
-    @Override
-    public synchronized SocketAddress tryReceive(ByteBuffer dst) throws IOException {
-        // Ignore what we read from pipe; we use it just for signalling.
-        {
-            ByteBuffer dummy = ByteBuffer.allocate(dst.capacity());
-            pipe.source().read(dummy);
-        }
+    totalSent++;
 
-        Message m = inQueue.poll();
-        if (m == null) {
-            return null;
-        }
+    int fromPort = ((InetSocketAddress) bindAddress).getPort();
+    int toPort = ((InetSocketAddress) endPoint).getPort();
 
-        m.buffer.rewind();
-        dst.put(m.buffer);
+    System.out.printf("%d -> %d: %s%n", fromPort, toPort, packet);
 
-        return m.source;
-    }
+    Message m = new Message(bindAddress, packet.toBuffer());
+    SocketStub other = allSockets.get(endPoint);
+    other.inQueue.add(m);
+    other.pipe.sink().write(m.buffer.duplicate());
 
-    @Override
-    public synchronized int sendDirect(Packet packet, SocketAddress endPoint) throws IOException {
-        if (!allSockets.containsKey(endPoint)) {
-            throw new UnresolvedAddressException();
-        }
+    return m.buffer.limit();
+  }
 
-        totalSent++;
+  @Override
+  public void close() throws IOException {
+    pipe.source().close();
+    pipe.sink().close();
 
-        int fromPort = ((InetSocketAddress) bindAddress).getPort();
-        int toPort = ((InetSocketAddress) endPoint).getPort();
-
-        System.out.printf("%d -> %d: %s%n", fromPort, toPort, packet);
-
-        Message m = new Message(bindAddress, packet.toBuffer());
-        SocketStub other = allSockets.get(endPoint);
-        other.inQueue.add(m);
-        other.pipe.sink().write(m.buffer.duplicate());
-
-        return m.buffer.limit();
-    }
-
-    @Override
-    public void close() throws IOException {
-        pipe.source().close();
-        pipe.sink().close();
-
-        int fromPort = ((InetSocketAddress) bindAddress).getPort();
-        System.out.printf("Total packets sent from %d: %d%n", fromPort, totalSent);
-    }
+    int fromPort = ((InetSocketAddress) bindAddress).getPort();
+    System.out.printf("Total packets sent from %d: %d%n", fromPort, totalSent);
+  }
 }
