@@ -1,11 +1,10 @@
 package shellderp.game.network;
 
 import org.junit.Test;
-import shellderp.game.network.Packet;
 
 import java.nio.ByteBuffer;
 
-import static junit.framework.Assert.*;
+import static org.junit.Assert.*;
 
 public class PacketTest {
 

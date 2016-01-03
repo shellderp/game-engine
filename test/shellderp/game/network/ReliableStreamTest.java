@@ -1,12 +1,14 @@
 package shellderp.game.network;
 
-import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * Created by: Mike
@@ -35,12 +37,12 @@ public class ReliableStreamTest {
       @Override
       public void onReliableRead(Connection connection, ByteBuffer payload) {
         int index = numReads.getAndIncrement();
-        Assert.assertEquals(index, payload.getInt());
+        assertEquals(index, payload.getInt());
       }
 
       @Override
       public void onUnreliableRead(Connection connection, ByteBuffer payload) {
-        Assert.fail("should be no unreliable read");
+        fail("should be no unreliable read");
       }
     });
 
@@ -77,7 +79,7 @@ public class ReliableStreamTest {
         count = 0;
       }
     }
-    Assert.assertEquals(numWrites, numReads.get());
+    assertEquals(numWrites, numReads.get());
 
     server.stop();
   }
@@ -96,12 +98,12 @@ public class ReliableStreamTest {
       @Override
       public void onReliableRead(Connection connection, ByteBuffer payload) {
         int index = numReads.getAndIncrement();
-        Assert.assertEquals(index, payload.getInt());
+        assertEquals(index, payload.getInt());
       }
 
       @Override
       public void onUnreliableRead(Connection connection, ByteBuffer payload) {
-        Assert.fail("should be no unreliable read");
+        fail("should be no unreliable read");
       }
     });
 
@@ -132,7 +134,7 @@ public class ReliableStreamTest {
         count = 0;
       }
     }
-    Assert.assertEquals(numWrites, numReads.get());
+    assertEquals(numWrites, numReads.get());
 
     server.stop();
   }
@@ -169,7 +171,7 @@ public class ReliableStreamTest {
         byte[] p = new byte[payload.remaining()];
         payload.get(p);
         String s = new String(p);
-        Assert.assertEquals(index, Integer.parseInt(s));
+        assertEquals(index, Integer.parseInt(s));
       }
     });
 
@@ -199,8 +201,8 @@ public class ReliableStreamTest {
         count = 0;
       }
     }
-    Assert.assertEquals(numWrites, numServerReads.get());
-    Assert.assertEquals(numWrites, numClientReads.get());
+    assertEquals(numWrites, numServerReads.get());
+    assertEquals(numWrites, numClientReads.get());
 
     server.stop();
   }
@@ -248,8 +250,8 @@ public class ReliableStreamTest {
       }
       Thread.sleep(50);
     }
-    Assert.assertEquals(0, numReads.get());
-    Assert.assertEquals(1, numClosed.get());
+    assertEquals(0, numReads.get());
+    assertEquals(1, numClosed.get());
 
     server.stop();
   }

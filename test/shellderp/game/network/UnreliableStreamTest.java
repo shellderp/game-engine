@@ -7,8 +7,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static junit.framework.Assert.*;
-import static junit.framework.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * Created by: Mike

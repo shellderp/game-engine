@@ -7,7 +7,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static junit.framework.Assert.*;
+import static org.junit.Assert.*;
 
 public class ConnectionTest {
 

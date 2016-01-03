@@ -31,6 +31,7 @@ import java.util.logging.Logger;
  * Created by: Mike
  */
 public class Connection implements GameStep {
+  private static final Logger logger = Logger.getLogger(Connection.class.getName());
 
   /**
    * The socket underlying this connection. In Connection we only use the send
@@ -343,6 +344,4 @@ public class Connection implements GameStep {
 
     return connection;
   }
-
-  private static final Logger logger = Logger.getLogger(Connection.class.getName());
 }
