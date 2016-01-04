@@ -16,8 +16,7 @@ import java.awt.event.MouseEvent;
  * <p>
  * Created by: Mike
  */
-public class Button extends Parent {
-
+public class Button extends ParentWidget {
   private final Widget child;
   private final Bounds bounds;
   private final Runnable callback;
@@ -66,8 +65,6 @@ public class Button extends Parent {
 
     if (mouseHeldDown || enterPressFrames > 0) {
       graphics.setColor(new Color(0, 98, 201));
-//            graphics.setColor(new Color((int) (Math.random() * 255), (int) (Math.random() * 255),
-//                                        (int) (Math.random() * 255)));
     } else {
       graphics.setColor(timedColorFade.getCurrentColor());
     }

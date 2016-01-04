@@ -19,17 +19,17 @@ public class ScrollContainer {
   public static Container create(final Widget child, final Bounds bounds) {
     Container scrollContainer = new Container(bounds);
     // TODO: also add the scrollbars and adjust ScrollParent's width/height
-    scrollContainer.add(new ScrollParent(child, Bounds.FULL_SIZE));
+    scrollContainer.add(new ScrollParentWidget(child, Bounds.FULL_SIZE));
     return scrollContainer;
   }
 
-  private static class ScrollParent extends Parent {
+  private static class ScrollParentWidget extends ParentWidget {
     private final Widget child;
     private final Bounds bounds;
 
     private int scrollX = 0, scrollY = 0;
 
-    public ScrollParent(final Widget child, final Bounds bounds) {
+    public ScrollParentWidget(final Widget child, final Bounds bounds) {
       this.child = child;
       this.bounds = bounds;
       child.setParent(this);
@@ -53,8 +53,8 @@ public class ScrollContainer {
       // since we are a Parent so ignore.
       if (hasFocus()) {
         getParent().focusNext();
-      } else if (child instanceof Parent) {
-        ((Parent) child).focusNext();
+      } else if (child instanceof ParentWidget) {
+        ((ParentWidget) child).focusNext();
       }
     }
 
@@ -62,8 +62,8 @@ public class ScrollContainer {
     protected void focusPrevious() {
       if (hasFocus()) {
         getParent().focusPrevious();
-      } else if (child instanceof Parent) {
-        ((Parent) child).focusNext();
+      } else if (child instanceof ParentWidget) {
+        ((ParentWidget) child).focusNext();
       }
     }
 

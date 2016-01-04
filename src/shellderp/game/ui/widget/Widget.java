@@ -23,13 +23,13 @@ import java.awt.event.MouseWheelListener;
 public abstract class Widget implements GameStep, Renderable, KeyListener,
     MouseListener, MouseMotionListener, MouseWheelListener {
 
-  private Parent parent;
+  private ParentWidget parent;
 
-  protected final Parent getParent() {
+  protected final ParentWidget getParent() {
     return parent;
   }
 
-  protected final void setParent(Parent parent) {
+  protected final void setParent(ParentWidget parent) {
     this.parent = parent;
     onParentChange();
   }

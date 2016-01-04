@@ -22,7 +22,7 @@ import java.util.Map;
  * <p>
  * Created by: Mike
  */
-public class Container extends Parent {
+public class Container extends ParentWidget {
 
   /**
    * Enable to show bounding boxes around each child.
@@ -90,8 +90,8 @@ public class Container extends Parent {
       for (int i = currentFocusedIndex + 1; i < children.size(); i++) {
         final Widget child = children.get(i);
         if (child.wantsFocus()) {
-          if (child instanceof Parent) {
-            ((Parent) child).focusNext();
+          if (child instanceof ParentWidget) {
+            ((ParentWidget) child).focusNext();
           }
           setFocusedChild(child);
           return;
@@ -108,8 +108,8 @@ public class Container extends Parent {
     // we find nothing, we have no parent to divert to anyway.
     for (Widget child : children) {
       if (child.wantsFocus()) {
-        if (child instanceof Parent) {
-          ((Parent) child).focusNext();
+        if (child instanceof ParentWidget) {
+          ((ParentWidget) child).focusNext();
         }
         setFocusedChild(child);
         return;
@@ -125,8 +125,8 @@ public class Container extends Parent {
       for (int i = currentFocusedIndex - 1; i >= 0; i--) {
         final Widget child = children.get(i);
         if (child.wantsFocus()) {
-          if (child instanceof Parent) {
-            ((Parent) child).focusPrevious();
+          if (child instanceof ParentWidget) {
+            ((ParentWidget) child).focusPrevious();
           }
           setFocusedChild(child);
           return;
@@ -145,8 +145,8 @@ public class Container extends Parent {
     while (iterator.hasPrevious()) {
       final Widget child = iterator.previous();
       if (child.wantsFocus()) {
-        if (child instanceof Parent) {
-          ((Parent) child).focusPrevious();
+        if (child instanceof ParentWidget) {
+          ((ParentWidget) child).focusPrevious();
         }
         setFocusedChild(child);
         return;
@@ -170,8 +170,8 @@ public class Container extends Parent {
       // Give focus to the first child.
       for (Widget child : children) {
         if (child.wantsFocus()) {
-          if (child instanceof Parent) {
-            ((Parent) child).focusNext();
+          if (child instanceof ParentWidget) {
+            ((ParentWidget) child).focusNext();
           }
           setFocusedChild(child);
           return;

@@ -11,7 +11,7 @@ import java.awt.event.KeyEvent;
  * <p>
  * Created by: Mike
  */
-public abstract class Parent extends Widget {
+public abstract class ParentWidget extends Widget {
 
   protected abstract Widget getFocusedChild();
 
