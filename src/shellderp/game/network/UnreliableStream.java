@@ -68,6 +68,11 @@ public class UnreliableStream implements GameStep, SendableStream {
     sequenceOut = Packet.nextSequence(sequenceOut);
   }
 
+  @Override
+  public int maxSupportedPacketSize() {
+    return Packet.MAX_PACKET_SIZE;
+  }
+
   /**
    * Packet was just received on the channel, if valid then dispatch it.
    * An unreliable packet is valid unless the sequence is out of order,

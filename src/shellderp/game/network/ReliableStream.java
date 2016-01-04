@@ -90,7 +90,11 @@ public class ReliableStream implements GameStep, SendableStream {
       throw new IllegalStateException("cannot send on closed Connection");
     }
 
-    Packet packet = new Packet.Builder().reliable().payload(payload).sequence(sequenceOut).build();
+    Packet packet = new Packet.Builder()
+        .reliable()
+        .payload(payload)
+        .sequence(sequenceOut)
+        .build();
     sequenceOut = Packet.nextSequence(sequenceOut);
 
     if (!outQueue.isEmpty()) {
@@ -119,6 +123,11 @@ public class ReliableStream implements GameStep, SendableStream {
     }
 
     // TODO: have a log warning when send queue is large, however ConcurrentLinkedQueue.size() is O(n)
+  }
+
+  @Override
+  public int maxSupportedPacketSize() {
+    return Packet.MAX_PACKET_SIZE;
   }
 
   void packetReceived(Packet packet) throws IOException {

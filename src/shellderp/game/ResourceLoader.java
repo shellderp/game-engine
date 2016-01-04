@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 /**
- * TODO: make this a singleton with get/set so client can specify a custom loader
  * Created by: Mike
  */
 public abstract class ResourceLoader {

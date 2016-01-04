@@ -15,5 +15,7 @@ public interface SendableStream {
    *                resend the packet.
    * @throws IOException
    */
-  public void sendAsync(ByteBuffer payload) throws IOException;
+  void sendAsync(ByteBuffer payload) throws IOException;
+
+  int maxSupportedPacketSize();
 }
