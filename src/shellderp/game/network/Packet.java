@@ -205,14 +205,14 @@ public class Packet {
     return new Packet(payload, sequence, reliable, connectRequest, ack, ackSequence, close);
   }
 
-  public ByteBuffer toBuffer() {
+  public ByteBuffer toBuffer() throws MalformedPacketException {
     final int size = ((payload == null) ? 0 : payload.limit())
                      + 1 /* 1 byte flags */
                      + 2 /* 2 byte sequence */
                      + (ack ? 2 : 0); /* optional 2 byte ack sequence */
 
     if (size > MAX_PACKET_SIZE) {
-      throw new IllegalArgumentException(
+      throw new MalformedPacketException(
           "payload size exceeds maximum packet size (" + size + " bytes)");
     }
 
@@ -244,20 +244,29 @@ public class Packet {
 
   @Override
   public String toString() {
-    byte[] p = new byte[0];
-    if (payload != null) {
-      p = new byte[payload.remaining()];
-      payload.duplicate().get(p);
-    }
     return "Packet{" +
-           "payload=" + new String(p).replace("\n", "\\n").replace("\r", "\\r") +
+           "payload=[" + (payload == null ? "" : byteBufferToHex(payload.duplicate())) + "]" +
            ", sequence=" + sequence +
            ", reliable=" + reliable +
            ", connectRequest=" + connectRequest +
            ", close=" + close +
            ", ack=" + ack +
-           ", ackSequence=" + ackSequence +
-           '}';
+           ", ackSequence=" + ackSequence + '}';
+  }
+
+  private static String byteBufferToHex(ByteBuffer byteBuffer) {
+    StringBuilder stringBuilder = new StringBuilder();
+    while (byteBuffer.hasRemaining()) {
+      final String hex = Integer.toHexString(byteBuffer.get() & 0xFF).toUpperCase();
+      if (hex.length() == 1) {
+        stringBuilder.append("0");
+      }
+      stringBuilder.append(hex);
+      if (byteBuffer.hasRemaining()) {
+        stringBuilder.append(" ");
+      }
+    }
+    return stringBuilder.toString();
   }
 
   public static int nextSequence(int sequence) {
