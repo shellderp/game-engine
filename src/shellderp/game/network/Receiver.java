@@ -4,12 +4,8 @@ import java.io.IOException;
 import java.net.SocketAddress;
 
 /**
- * Simple interface to provide a packet-received handler when ReceiveThread has read a message packet.
- * <p>
- * Created by: Mike
+ * Packet-received handler when ReceiveThread has read a message packet.
  */
 interface Receiver {
-
   void packetReceived(SocketAddress from, Packet packet) throws IOException;
-
 }

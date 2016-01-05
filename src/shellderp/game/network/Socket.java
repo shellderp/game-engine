@@ -55,7 +55,7 @@ public class Socket {
    * Send a packet unreliably with no delay.
    * If successful, the buffer is guaranteed to be sent whole in one packet.
    * <p>
-   * This method is thread-safe since the DatagramChannel.send is thread-safe.
+   * This method is thread-safe since DatagramChannel.send is thread-safe.
    *
    * @param packet   The packet to send.
    * @param endPoint The target to send to.

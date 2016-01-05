@@ -14,10 +14,9 @@ import java.util.logging.Logger;
 
 /**
  * Manages connections from multiple clients and implements connection establishment protocol.
- * <p>
- * Created by: Mike
  */
 public class Server implements GameStep {
+  private static final Logger logger = Logger.getLogger(Server.class.getName());
 
   private final Socket socket;
 
@@ -120,8 +119,7 @@ public class Server implements GameStep {
       } catch (Throwable t) {
         // Catch any exception thrown in client processing so that it doesn't crash the server.
         logger.log(Level.WARNING,
-            "uncaught Throwable in Connection packet processing, closing connection " +
-            connection, t);
+            "uncaught Throwable in Connection packet processing, closing connection " + connection, t);
         connection.close();
       }
       return;
@@ -169,9 +167,7 @@ public class Server implements GameStep {
       // We must be receiving data from this address, but we have no connection.
       // This means they think we have a connection, which we can ignore since their end will
       // time out shortly.
-      logger.fine("got an unhandleable packet from unconnected source: " + packet);
+      logger.fine("can't handle packet from unconnected source: " + packet);
     }
   }
-
-  private static final Logger logger = Logger.getLogger(Server.class.getName());
 }

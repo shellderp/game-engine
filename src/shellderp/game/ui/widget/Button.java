@@ -26,7 +26,7 @@ public class Button extends ParentWidget {
   private final TimedColorFade timedColorFade;
 
   /**
-   * Used to indicate when enter is pressed on the button, and is decremented every frame while above 0.
+   * Used to remember when enter is pressed on the button, and is decremented every frame while above 0.
    */
   private int enterPressFrames = 0;
 

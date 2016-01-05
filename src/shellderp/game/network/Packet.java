@@ -6,11 +6,8 @@ import java.nio.ByteBuffer;
  * Immutable class representing a packet sent on the network. Provides toBuffer and fromBuffer methods to
  * send and receive on the network. This is transparent to a user of this library, since they just send and
  * receive payload ByteBuffers. Packets must be created using the Builder subclass.
- * <p>
- * Created by: Mike
  */
 public class Packet {
-
   private static final int BITFLAG_RELIABLE = 1 << 0;
   private static final int BITFLAG_ACK = 1 << 1;
   private static final int BITFLAG_CONNECT_REQUEST = 1 << 2;
@@ -174,21 +171,28 @@ public class Packet {
    * The payload buffer of the returned packet is created as a copy and thus not tied to the buffer
    * parameter.
    */
-  public static Packet fromBuffer(ByteBuffer buffer) {
+  public static Packet fromBuffer(ByteBuffer buffer) throws MalformedPacketException {
     if (buffer.limit() < 3) {
-      System.err.println(buffer);
-      throw new IllegalArgumentException("buffer must be at least 3 bytes long to create Packet");
+      throw new MalformedPacketException();
     }
 
-    byte flags = buffer.get();
-    int sequence = buffer.getShort() & 0xFFFF; // Make sure it isn't negative.
+    final byte flags = buffer.get();
+    final int sequence = buffer.getShort() & 0xFFFF; // Make sure it isn't negative.
 
-    boolean reliable = (flags & BITFLAG_RELIABLE) != 0;
-    boolean connectRequest = (flags & BITFLAG_CONNECT_REQUEST) != 0;
-    boolean ack = (flags & BITFLAG_ACK) != 0;
-    boolean close = (flags & BITFLAG_CLOSE) != 0;
+    final boolean reliable = (flags & BITFLAG_RELIABLE) != 0;
+    final boolean connectRequest = (flags & BITFLAG_CONNECT_REQUEST) != 0;
+    final boolean ack = (flags & BITFLAG_ACK) != 0;
+    final boolean close = (flags & BITFLAG_CLOSE) != 0;
 
-    int ackSequence = ack ? (buffer.getShort() & 0xFFFF) : 0;
+    final int ackSequence;
+    if (ack) {
+      if (buffer.remaining() < 2) {
+        throw new MalformedPacketException();
+      }
+      ackSequence = buffer.getShort() & 0xFFFF;
+    } else {
+      ackSequence = 0;
+    }
 
     ByteBuffer payload = null;
     if (buffer.hasRemaining()) {

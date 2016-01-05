@@ -46,4 +46,27 @@ public class PacketTest {
   public void testPayloadWithNoSequence() {
     new Packet.Builder().payload(ByteBuffer.allocate(1)).build();
   }
+
+  @Test(expected = MalformedPacketException.class)
+  public void testMalformedTooShort0() throws MalformedPacketException {
+    Packet.fromBuffer(ByteBuffer.allocate(0));
+  }
+
+  @Test(expected = MalformedPacketException.class)
+  public void testMalformedTooShort1() throws MalformedPacketException {
+    Packet.fromBuffer(ByteBuffer.allocate(1));
+  }
+
+  @Test(expected = MalformedPacketException.class)
+  public void testMalformedTooShort2() throws MalformedPacketException {
+    Packet.fromBuffer(ByteBuffer.allocate(2));
+  }
+
+  @Test(expected = MalformedPacketException.class)
+  public void testMalformedMissingAckSequence() throws MalformedPacketException {
+    ByteBuffer buffer = new Packet.Builder().ack(5).build().toBuffer();
+    final ByteBuffer duplicate = buffer.duplicate();
+    duplicate.limit(3);
+    Packet.fromBuffer(duplicate);
+  }
 }
