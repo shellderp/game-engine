@@ -4,6 +4,7 @@ import shellderp.game.GameStep;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Logger;
 
@@ -57,7 +58,7 @@ public class UnreliableStream implements GameStep, SendableStream {
    */
   public synchronized void sendAsync(ByteBuffer payload) throws IOException {
     if (!connection.isOpen()) {
-      throw new IllegalStateException("cannot send on closed Connection");
+      throw new ClosedChannelException();
     }
 
     Packet packet = new Packet.Builder().payload(payload).sequence(sequenceOut).build();
@@ -88,7 +89,7 @@ public class UnreliableStream implements GameStep, SendableStream {
     // In the unreliable stream, we only want to receive the latest data. As long as this packet is newer
     // than the last packet we've seen, we use it, even if we missed some packets on the way.
     if (Packet.newerThanExpected(sequenceIn, packet.getSequence())) {
-      // TODO: count this stat - how many packets we skip on avg
+      // TODO: count this stat - how many packets skipped
 //            if (newSeq > sequenceIn) {
 //                logger.info(
 //                        String.format("skipped, %d -> %d -- %d", sequenceIn, newSeq, newSeq - sequenceIn));

@@ -7,7 +7,6 @@ import java.nio.ByteBuffer;
 import static org.junit.Assert.*;
 
 public class PacketTest {
-
   @Test
   public void testFromBuffer() throws Exception {
     ByteBuffer payload = ByteBuffer.wrap("test".getBytes());

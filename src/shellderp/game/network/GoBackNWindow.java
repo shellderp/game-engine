@@ -187,9 +187,9 @@ class GoBackNWindow {
    * Called when a packet is sent, to be stored until it is ACKed.
    * The timer is set unless it is already set.
    */
-  public void packetSent(Packet packet) {
+  public void packetSent(Packet packet) throws ProtocolException {
     if (!Packet.newerThanExpected(sequenceOut, packet.getSequence())) {
-      throw new IllegalArgumentException(
+      throw new ProtocolException(
           "send window is expecting a higher sequence number; got " + packet.getSequence() +
           ", expected at least: " + sequenceOut);
     }

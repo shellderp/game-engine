@@ -4,6 +4,7 @@ import shellderp.game.GameStep;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -87,7 +88,7 @@ public class ReliableStream implements GameStep, SendableStream {
    */
   public synchronized void sendAsync(ByteBuffer payload) throws IOException {
     if (!connection.isOpen()) {
-      throw new IllegalStateException("cannot send on closed Connection");
+      throw new ClosedChannelException();
     }
 
     Packet packet = new Packet.Builder()
@@ -148,7 +149,7 @@ public class ReliableStream implements GameStep, SendableStream {
       }
     }
 
-    if (!packet.isReliable()) {  // sanity check for packet dispatching logic
+    if (!packet.isReliable()) { // sanity check for packet dispatching logic
       throw new IllegalArgumentException("reliable stream got unreliable packet with no ACK");
     }
 

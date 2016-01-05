@@ -89,7 +89,7 @@ public class Packet {
      * @return This builder.
      */
     public Builder payload(ByteBuffer payload) {
-      if (payload == null || payload.limit() == 0) {
+      if (payload == null || payload.remaining() == 0) {
         throw new IllegalArgumentException("payload cannot be null or empty");
       }
       this.payload = payload;
@@ -172,7 +172,7 @@ public class Packet {
    * parameter.
    */
   public static Packet fromBuffer(ByteBuffer buffer) throws MalformedPacketException {
-    if (buffer.limit() < 3) {
+    if (buffer.remaining() < 3 || buffer.remaining() > MAX_PACKET_SIZE) {
       throw new MalformedPacketException();
     }
 
@@ -245,28 +245,13 @@ public class Packet {
   @Override
   public String toString() {
     return "Packet{" +
-           "payload=[" + (payload == null ? "" : byteBufferToHex(payload.duplicate())) + "]" +
+           "payload=[" + (payload == null ? "" : Util.byteBufferToHex(payload)) + "]" +
            ", sequence=" + sequence +
            ", reliable=" + reliable +
            ", connectRequest=" + connectRequest +
            ", close=" + close +
            ", ack=" + ack +
            ", ackSequence=" + ackSequence + '}';
-  }
-
-  private static String byteBufferToHex(ByteBuffer byteBuffer) {
-    StringBuilder stringBuilder = new StringBuilder();
-    while (byteBuffer.hasRemaining()) {
-      final String hex = Integer.toHexString(byteBuffer.get() & 0xFF).toUpperCase();
-      if (hex.length() == 1) {
-        stringBuilder.append("0");
-      }
-      stringBuilder.append(hex);
-      if (byteBuffer.hasRemaining()) {
-        stringBuilder.append(" ");
-      }
-    }
-    return stringBuilder.toString();
   }
 
   public static int nextSequence(int sequence) {

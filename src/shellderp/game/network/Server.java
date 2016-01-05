@@ -133,8 +133,7 @@ public class Server implements GameStep {
       if (pendingConnections.containsKey(probe)) {
         final int clientSequence = pendingConnections.remove(probe);
         final Connection client = new Connection(socket, fromAddress, clientSequence,
-            packet.getAckSequence(),
-            connectionHandlerProvider.get());
+            packet.getAckSequence(), connectionHandlerProvider.get());
         clients.put(fromAddress, client);
       } else {
         logger.info("got ACK with no corresponding pending connection " + probe);
