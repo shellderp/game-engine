@@ -231,10 +231,8 @@ public class Packet {
     }
 
     if (payload != null) {
-      buffer.put(payload);
-
-      // Rewind the payload, in case we wish to call toBuffer again.
-      payload.rewind();
+      // Create a duplicate to avoid altering the original (also keeps this class entirely immutable).
+      buffer.put(payload.duplicate());
     }
 
     // Done writing, return the buffer in read mode.
@@ -244,14 +242,12 @@ public class Packet {
 
   @Override
   public String toString() {
-    return "Packet{" +
-           "payload=[" + (payload == null ? "" : Util.byteBufferToHex(payload)) + "]" +
-           ", sequence=" + sequence +
-           ", reliable=" + reliable +
-           ", connectRequest=" + connectRequest +
-           ", close=" + close +
-           ", ack=" + ack +
-           ", ackSequence=" + ackSequence + '}';
+    return "[" + (payload == null ? "" : Util.byteBufferToHex(payload)) + "]"
+           + " (sequence = " + sequence + ")"
+           + (reliable ? " (reliable)" : "")
+           + (connectRequest ? " (connectRequest)" : "")
+           + (close ? " (close)" : "")
+           + (ack ? " (ack = " + ackSequence + ")" : "");
   }
 
   public static int nextSequence(int sequence) {

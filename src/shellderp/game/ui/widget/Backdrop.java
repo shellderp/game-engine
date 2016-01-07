@@ -12,7 +12,6 @@ import java.awt.Rectangle;
  * Created by: Mike
  */
 public class Backdrop extends Widget {
-
   private final Color background;
   private final boolean rounded;
 

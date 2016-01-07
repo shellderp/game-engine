@@ -62,6 +62,14 @@ public class PacketTest {
   }
 
   @Test(expected = MalformedPacketException.class)
+  public void testMalformedTooShort3advanced1() throws MalformedPacketException {
+    // the limit is 3 but remaining is 2
+    ByteBuffer buffer = ByteBuffer.allocate(3);
+    buffer.get();
+    Packet.fromBuffer(buffer);
+  }
+
+  @Test(expected = MalformedPacketException.class)
   public void testMalformedMissingAckSequence() throws MalformedPacketException {
     ByteBuffer buffer = new Packet.Builder().ack(5).build().toBuffer();
     final ByteBuffer duplicate = buffer.duplicate();
